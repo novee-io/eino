@@ -292,3 +292,7 @@ func (m *myCallback) OnStartWithStreamInput(ctx context.Context, info *RunInfo, 
 func (m *myCallback) OnEndWithStreamOutput(ctx context.Context, info *RunInfo, output *schema.StreamReader[CallbackOutput]) context.Context {
 	panic("implement me")
 }
+
+func (m *myCallback) Needed(ctx context.Context, info *RunInfo, timing CallbackTiming) bool {
+	return true // Simple implementation for testing
+}

@@ -359,6 +359,10 @@ func (t *testGraphCallback) OnEndWithStreamOutput(ctx context.Context, info *cal
 	return ctx
 }
 
+func (t *testGraphCallback) Needed(ctx context.Context, info *callbacks.RunInfo, timing callbacks.CallbackTiming) bool {
+	return true // Simple implementation for testing
+}
+
 func TestNestedSubGraph(t *testing.T) {
 	RegisterSerializableType[testStruct]("test_struct")
 	ssubG := NewGraph[string, string](WithGenLocalState(func(ctx context.Context) (state *testStruct) {
