@@ -18,6 +18,7 @@ package compose
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,6 +46,28 @@ func TestLambda(t *testing.T) {
 			},
 			WithLambdaCallbackEnable(false),
 			WithLambdaType("ForTest"),
+		)
+
+		assert.Equal(t, false, ld.executor.meta.isComponentCallbackEnabled)
+		assert.Equal(t, ComponentOfLambda, ld.executor.meta.component)
+		assert.Equal(t, "ForTest", ld.executor.meta.componentImplType)
+	})
+
+	t.Run("InvokableLambdaWithState", func(t *testing.T) {
+		ld := InvokableLambdaWithState(
+			func(ctx context.Context, input string, lock *sync.Mutex, state *any) (output string, err error) {
+				return "good", nil
+			},
+		)
+
+		assert.Equal(t, false, ld.executor.meta.isComponentCallbackEnabled)
+		assert.Equal(t, ComponentOfLambda, ld.executor.meta.component)
+		assert.Equal(t, "ForTest", ld.executor.meta.componentImplType)
+
+		ld = InvokableLambdaWithState(
+			func(ctx context.Context, input string, lock *sync.Mutex, state *any) (output string, err error) {
+				return "good", nil
+			},
 		)
 
 		assert.Equal(t, false, ld.executor.meta.isComponentCallbackEnabled)
