@@ -43,6 +43,8 @@ type Handler interface {
 		input *schema.StreamReader[CallbackInput]) context.Context
 	OnEndWithStreamOutput(ctx context.Context, info *RunInfo,
 		output *schema.StreamReader[CallbackOutput]) context.Context
+
+	Needed(ctx context.Context, info *RunInfo, timing CallbackTiming) bool
 }
 
 type CallbackTiming uint8

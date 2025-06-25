@@ -19,6 +19,7 @@ package compose
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/cloudwego/eino/schema"
 )
@@ -40,6 +41,9 @@ type Transform[I, O, TOption any] func(ctx context.Context,
 
 // InvokeWOOpt is the type of the invokable lambda function without options.
 type InvokeWOOpt[I, O any] func(ctx context.Context, input I) (output O, err error)
+
+// InvokeWOOptWState is the type of the invokable lambda function without options and state.
+type InvokeWOOptWState[I, O, S any] func(ctx context.Context, input I, lock *sync.Mutex, state S) (output O, err error)
 
 // StreamWOOpt is the type of the streamable lambda function without options.
 type StreamWOOpt[I, O any] func(ctx context.Context,
@@ -105,6 +109,19 @@ func InvokableLambdaWithOption[I, O, TOption any](i Invoke[I, O, TOption], opts 
 func InvokableLambda[I, O any](i InvokeWOOpt[I, O], opts ...LambdaOpt) *Lambda {
 	f := func(ctx context.Context, input I, opts_ ...unreachableOption) (output O, err error) {
 		return i(ctx, input)
+	}
+
+	return anyLambda(f, nil, nil, nil, opts...)
+}
+
+func InvokableLambdaWithState[I, O, S any](i InvokeWOOptWState[I, O, S], opts ...LambdaOpt) *Lambda {
+	f := func(ctx context.Context, input I, opts_ ...unreachableOption) (output O, err error) {
+		state, lock, err := getState[S](ctx)
+		if err != nil {
+			return output, err
+		}
+
+		return i(ctx, input, lock, state)
 	}
 
 	return anyLambda(f, nil, nil, nil, opts...)

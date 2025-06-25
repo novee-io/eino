@@ -7,7 +7,7 @@ on:
       - main
 
 env:
-  DEFAULT_GO_VERSION: "1.18"
+  DEFAULT_GO_VERSION: "1.24.4"
 
 jobs:
   unit-test:
@@ -157,7 +157,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: ${{ env.DEFAULT_GO_VERSION }}
           
       - name: Install go-apidiff
         run: go install github.com/joelanford/go-apidiff@v0.8.2
