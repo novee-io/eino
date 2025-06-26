@@ -118,28 +118,6 @@ jobs:
       - name: Run Benchmark Tests
         run: go test -bench=. -benchmem -run=none ./...
 
-  compatibility-test:
-    strategy:
-      matrix:
-        go: [ "1.19", "1.20", "1.21", "1.22" ]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      repository-projects: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-          cache: true
-
-      - name: Compatibility Test
-        run: |
-          # just basic unit test, no coverage report
-          go test -race ./...
-
   api-compatibility:
     name: api-compatibility-check
     runs-on: ubuntu-latest
