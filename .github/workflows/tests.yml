@@ -20,14 +20,14 @@ jobs:
     env:
       COVERAGE_FILE: coverage.out
       BREAKDOWN_FILE: main.breakdown
-      
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
-          
+
       - name: Exec Go Test
         run: |
           modules=`find . -name "go.mod" -exec dirname {} \;`
@@ -35,17 +35,26 @@ jobs:
           list=""
           coverpkg=""
           if [[ ! -f "go.work" ]];then go work init;fi
-          for module in $modules; do go work use $module; list=$module"/... "$list; coverpkg=$module"/...,"$coverpkg; done
+          for module in $modules; do
+            go work use $module
+            list=$module"/... "$list
+            coverpkg=$module"/...,"$coverpkg
+          done
           go work sync
-          go test -race -v -coverprofile=${{ env.COVERAGE_FILE }} -gcflags="all=-l -N" -coverpkg=$coverpkg $list
-          
+          go test -race -v -coverprofile=${{ env.COVERAGE_FILE }} \
+            -gcflags="all=-l -N" -coverpkg=$coverpkg $list
+
       - name: Download Artifact (main.breakdown)
         id: download-main-breakdown
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v11
         continue-on-error: true
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: tests.yml
+          branch: main
           name: ${{ env.BREAKDOWN_FILE }}
-          
+          if_no_artifact_found: ignore
+
       - name: Create main.breakdown If Not Exist
         run: |
           if [ ! -f ${{ env.BREAKDOWN_FILE }} ]; then
@@ -54,27 +63,26 @@ jobs:
           else
             echo "${{ env.BREAKDOWN_FILE }} found."
           fi
-          
+
       - name: Calculate Coverage
         id: coverage
         uses: vladopajic/go-test-coverage@v2
         with:
           config: ./.testcoverage.yml
-          profile: ${{ env.COVERAGE_FILE}}
+          profile: ${{ env.COVERAGE_FILE }}
           breakdown-file-name: ${{ github.ref_name == 'main' && env.BREAKDOWN_FILE || '' }}
           diff-base-breakdown-file-name: ${{ env.BREAKDOWN_FILE }}
-
-          # to generate and embed coverage badges in markdown files
           git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
           git-branch: badges
-          
+
       - name: Upload Artifact (main.breakdown)
-        uses: actions/upload-artifact@v4
         if: github.ref_name == 'main'
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BREAKDOWN_FILE }}
           path: ${{ env.BREAKDOWN_FILE }}
           if-no-files-found: error
+
       - name: Find If coverage Report Exist
         if: ${{ github.event.pull_request.number != null }}
         uses: peter-evans/find-comment@v3
@@ -83,6 +91,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: '📊 Coverage Report'
+
       - name: Send Coverage Report
         if: ${{ github.event.pull_request.number != null }}
         uses: peter-evans/create-or-update-comment@v4
